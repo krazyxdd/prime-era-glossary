@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prime Era — словарь-тренажёр</title>
+    <script>
+    (function() {
+        try {
+            var saved = localStorage.getItem("pe_theme");
+            if (saved === "dark")
+                document.documentElement.setAttribute("data-theme", "dark");
+        } catch (e) {}
+    })();
+    </script>
     <style>
     :root {
         --green: #1F3D2B;
@@ -19,6 +28,54 @@
         --danger-bg: #FBEAE8;
         --success: #2F6B3E;
         --success-bg: #E7F2E9;
+        --icon-bg: #F4F1E8;
+        --banner-text: #6B5420;
+        --info-bg: #EAF1EC;
+    }
+
+    html[data-theme="dark"] {
+        --green: #4C8F68;
+        --green-dark: #8FD1AC;
+        --gold: #D9B76A;
+        --gold-light: #3A331F;
+        --bg: #161816;
+        --card: #1F2220;
+        --text: #EDEBE5;
+        --text2: #9B9A93;
+        --border: #333632;
+        --danger: #E07A6E;
+        --danger-bg: #3A2220;
+        --success: #5FBE81;
+        --success-bg: #1E3226;
+        --icon-bg: #2A2D28;
+        --banner-text: #D9B76A;
+        --info-bg: #1C2A20;
+    }
+
+    html[data-theme="dark"] button:not(.secondary):not(.ghost):not(.danger) {
+        color: #0E140F;
+    }
+
+    body {
+        transition: background .2s, color .2s;
+    }
+
+    .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 12.5px;
+        color: var(--text2);
+        user-select: none;
+    }
+
+    .theme-toggle:hover {
+        border-color: var(--gold);
     }
 
     * {
@@ -129,7 +186,7 @@
         border: 1px solid var(--border);
         border-radius: 9px;
         font-size: 15px;
-        background: #fff;
+        background: var(--card);
         color: var(--text);
         font-family: inherit;
     }
@@ -174,7 +231,7 @@
     }
 
     button.secondary {
-        background: #fff;
+        background: var(--card);
         color: var(--green);
         border: 1px solid var(--border);
     }
@@ -223,7 +280,7 @@
         padding: 7px 13px;
         border-radius: 20px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: var(--card);
         font-size: 13px;
         cursor: pointer;
     }
@@ -319,7 +376,7 @@
         line-height: 1.6;
         display: none;
         text-align: left;
-        background: #F4F1E8;
+        background: var(--icon-bg);
         border-radius: 10px;
         padding: 12px 14px;
         margin-top: 4px;
@@ -384,7 +441,7 @@
         margin-bottom: 9px;
         border-radius: 9px;
         border: 1px solid var(--border);
-        background: #fff;
+        background: var(--card);
         color: var(--text);
         font-weight: 400;
         font-size: 14.5px;
@@ -416,6 +473,14 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 13.5px;
+        min-width: 520px;
+    }
+
+    .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -4px;
+        padding: 0 4px;
     }
 
     th, td {
@@ -509,7 +574,7 @@
         width: 76px;
         height: 76px;
         color: var(--gold);
-        background: #F4F1E8;
+        background: var(--icon-bg);
         border-radius: 16px;
         padding: 12px;
         display: flex;
@@ -533,7 +598,7 @@
 
     .banner {
         background: var(--gold-light);
-        color: #6B5420;
+        color: var(--banner-text);
         border-radius: 10px;
         padding: 12px 14px;
         font-size: 13px;
@@ -552,7 +617,7 @@
     }
 
     .banner.info {
-        background: #EAF1EC;
+        background: var(--info-bg);
         color: var(--green-dark);
     }
 
@@ -569,7 +634,7 @@
         font-size: 13.5px;
         font-weight: 600;
         cursor: pointer;
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border);
         color: var(--text2);
     }
@@ -588,7 +653,7 @@
     }
 
     .statbox {
-        background: #F4F1E8;
+        background: var(--icon-bg);
         border-radius: 10px;
         padding: 14px;
         text-align: center;
@@ -683,11 +748,17 @@
                 PRIME ERA 
                 <span>· тренажёр терминов</span>
             </div>
-            <div class="userbox" id="userboxTop" style="display:none;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeLabel">Тёмная тема</span>
+                </div>
+                <div class="userbox" id="userboxTop" style="display:none;">
 
-                      пользователь: 
-                <b id="curUserLabel"></b>
-                <button class="linkbtn" onclick="goLogin()">сменить</button>
+                            пользователь: 
+                    <b id="curUserLabel"></b>
+                    <button class="linkbtn" onclick="goLogin()">сменить</button>
+                </div>
             </div>
         </div>
 
@@ -1728,6 +1799,29 @@
     function $(id) {
         return document.getElementById(id);
     }
+
+    // ---------- ТЁМНАЯ ТЕМА ----------
+    function applyThemeUI() {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        $("themeIcon").textContent = isDark ? "☀️" : "🌙";
+        $("themeLabel").textContent = isDark ? "Светлая тема" : "Тёмная тема";
+    }
+    function toggleTheme() {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        if (isDark) {
+            document.documentElement.removeAttribute("data-theme");
+            try {
+                localStorage.setItem("pe_theme", "light");
+            } catch (e) {}
+        } else {
+            document.documentElement.setAttribute("data-theme", "dark");
+            try {
+                localStorage.setItem("pe_theme", "dark");
+            } catch (e) {}
+        }
+        applyThemeUI();
+    }
+
     function showScreen(id) {
         document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
         $(id).classList.add("active");
@@ -1938,8 +2032,8 @@
     }
     function renderExamplesBlock(container, term) {
         const ex = getExamplesFor(term);
+        container.style.display = "none";
         if (ex.length === 0) {
-            container.style.display = "none";
             container.innerHTML = "";
             return;
         }
@@ -2269,7 +2363,7 @@
             html += '<tr><td>' + escapeHtml(r.user) + '</td><td>' + dateStr + '</td><td>' + escapeHtml(r.category) + '</td><td><span class="pill">' + r.percent + '%</span> ' + r.score + '/' + r.total + '</td><td>' + formatDuration(r.durationSec) + '</td></tr>';
         });
         html += '</tbody></table>';
-        wrap.innerHTML = html;
+        wrap.innerHTML = '<div class="table-scroll">' + html + '</div>';
     }
     async function exportCSV() {
         const hist = await loadData(HISTORY_KEY, []);
@@ -2375,7 +2469,7 @@
                 + '<td>' + r.total + '</td></tr>';
             });
             html += '</tbody></table>';
-            hw.innerHTML = html;
+            hw.innerHTML = '<div class="table-scroll">' + html + '</div>';
         }
 
         // по пользователям
@@ -2405,7 +2499,7 @@
                 html += '<tr><td>' + escapeHtml(user) + '</td><td>' + s.exams + '</td><td><span class="pill ' + pillClass + '">' + avg + '%</span></td><td>' + dt.toLocaleDateString("ru-RU") + '</td></tr>';
             });
             html += '</tbody></table>';
-            uw.innerHTML = html;
+            uw.innerHTML = '<div class="table-scroll">' + html + '</div>';
         }
     }
 
@@ -2548,6 +2642,7 @@
 
     // ---------- INIT ----------
     async function initApp() {
+        applyThemeUI();
         await loadAllData();
         bindFilePreview("newTermImgInput", "newTermImgPreview", function(dataUrl) {
             newTermImageData = dataUrl;
