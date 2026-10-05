@@ -1,0 +1,952 @@
+<title>Prime Era · Статистика постов</title>
+<style>
+/* Layout: header + tabs → Панель (summary → department sections: department totals row, then employees rows or comparison) | Структура (departments → statistics + employees) | Внести цифры. */
+:root {
+  --green: #1F3D2B; --gold: #B8963E; --gold-light: #E8D9B5;
+  --bg: #F7F6F2; --card: #FFFFFF; --text: #242424; --muted: #6E6C64; --border: #E3E1D9;
+  --chip: #F4F1E8; --hover: #FAF8F2; --grid: #ECEAE2; --line: #1F3D2B; --total: #8A6A2B;
+  --up: #2F6B3E; --up-bg: #E7F2E9; --down: #B3413A; --down-bg: #FBEAE8;
+  --banner-bg: #F6EEDB; --banner-text: #6B5420;
+  --s1: #1F3D2B; --s2: #B8963E; --s3: #4F86A6; --s4: #A0522D; --s5: #6B8E5A; --s6: #7A5C99; --s7: #C27C0E;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --green: #8DBF9C; --gold: #D4B464; --gold-light: #3A3221;
+  --bg: #121614; --card: #1A201C; --text: #E9E7E0; --muted: #9A988F; --border: #2B332E;
+  --chip: #222A25; --hover: #1F2722; --grid: #252C27; --line: #8DBF9C; --total: #E2C27A;
+  --up: #8DCB9B; --up-bg: #1C2E21; --down: #E58A82; --down-bg: #3A2120;
+  --banner-bg: #2C2619; --banner-text: #E2C98A;
+  --s1: #8DBF9C; --s2: #D4B464; --s3: #7FB5D5; --s4: #E0906A; --s5: #A9C98F; --s6: #B79AD6; --s7: #F0B456;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --green: #8DBF9C; --gold: #D4B464; --gold-light: #3A3221;
+  --bg: #121614; --card: #1A201C; --text: #E9E7E0; --muted: #9A988F; --border: #2B332E;
+  --chip: #222A25; --hover: #1F2722; --grid: #252C27; --line: #8DBF9C; --total: #E2C27A;
+  --up: #8DCB9B; --up-bg: #1C2E21; --down: #E58A82; --down-bg: #3A2120;
+  --banner-bg: #2C2619; --banner-text: #E2C98A;
+  --s1: #8DBF9C; --s2: #D4B464; --s3: #7FB5D5; --s4: #E0906A; --s5: #A9C98F; --s6: #B79AD6; --s7: #F0B456;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.brand { display: grid; gap: 2px; }
+.eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+.brand h1 { font-size: 26px; color: var(--green); letter-spacing: -.01em; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--border); background: var(--card); padding: 8px 14px; border-radius: 9px; cursor: pointer; font-weight: 500; }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--green); color: var(--bg); border-color: var(--green); }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.sm { padding: 4px 9px; font-size: 12px; border-radius: 7px; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { background: var(--chip); color: var(--text); }
+.btn.danger { color: var(--down); }
+.btn.danger.armed { background: var(--down); color: var(--card); border-color: var(--down); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tabs button { border: 0; background: transparent; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-weight: 500; }
+.tabs button[aria-selected="true"] { color: var(--green); border-bottom-color: var(--gold); font-weight: 650; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 9px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; border-radius: 7px; cursor: pointer; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); font-weight: 600; }
+
+select, input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 0;
+}
+label.field { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+label.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.hint { color: var(--muted); font-size: 12px; }
+.banner { background: var(--banner-bg); color: var(--banner-text); border-radius: var(--radius); padding: 12px 16px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; justify-content: space-between; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.sum { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.sum b { font-size: 24px; font-weight: 650; color: var(--green); }
+.sum.good b { color: var(--up); } .sum.bad b { color: var(--down); } .sum.warn b { color: var(--gold); }
+.sum span { font-size: 12px; color: var(--muted); }
+.sum .who { font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+
+.dsec { display: grid; gap: 12px; padding-top: 4px; }
+.dsec-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); padding-bottom: 8px; }
+.dsec-head h2 { font-size: 20px; color: var(--green); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.dsec-head h2 small { font-size: 13px; color: var(--muted); font-weight: 400; }
+.collapse { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 6px; }
+.subhead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.subhead h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+@media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+.emp-block { display: grid; gap: 8px; }
+.emp-name { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.emp-name b { font-size: 15px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 12px 10px; display: grid; gap: 6px; min-width: 0; align-content: start; }
+.card.total { border-color: var(--gold); box-shadow: inset 0 3px 0 var(--gold); }
+.card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.card-head > div { min-width: 0; }
+.card h4 { font-size: 14px; margin: 0; line-height: 1.3; }
+.meta { font-size: 12px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.last { text-align: right; display: grid; justify-items: end; gap: 3px; flex-shrink: 0; }
+.last b { font-size: 17px; color: var(--green); white-space: nowrap; }
+.card.total .last b { color: var(--total); }
+.delta { font-size: 12px; padding: 1px 7px; border-radius: 999px; white-space: nowrap; font-weight: 600; }
+.delta.good { color: var(--up); background: var(--up-bg); } .delta.bad { color: var(--down); background: var(--down-bg); } .delta.flat { color: var(--muted); background: var(--chip); }
+.ch { width: 100%; height: 190px; }
+.ch { cursor: zoom-in; }
+.ch.click { cursor: pointer; }
+.sheet.big { width: min(1180px, 100%); }
+#bigChart { width: 100%; height: min(68vh, 620px); }
+.zoom { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 0 2px; line-height: 1; }
+.zoom:hover { color: var(--text); }
+.ch-empty { height: 190px; display: grid; place-items: center; color: var(--muted); font-size: 13px; background: var(--hover); border-radius: 8px; text-align: center; padding: 10px; }
+.quick { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; background: var(--chip); border-radius: 8px; padding: 6px 8px; }
+.quick .ql { font-size: 12px; color: var(--muted); flex: 1 1 110px; min-width: 0; }
+.quick .ql b { color: var(--text); font-weight: 600; }
+.quick input { flex: 1 1 80px; width: auto; max-width: 130px; padding: 5px 8px; text-align: right; }
+.quick .reset { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 12px; text-decoration: underline; padding: 0; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.empty-state { background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius); padding: 32px 20px; text-align: center; display: grid; gap: 10px; justify-items: center; color: var(--muted); }
+.empty-state h3 { color: var(--text); font-size: 16px; }
+
+.dept-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: grid; gap: 14px; }
+.dept-card > header { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+.dept-card h2 { font-size: 18px; color: var(--green); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px solid var(--border); background: var(--chip); border-radius: 999px; padding: 4px 11px; font-size: 13px; cursor: pointer; }
+.chip:hover { border-color: var(--gold); }
+.chip small { color: var(--muted); }
+.chip.add { background: transparent; border-style: dashed; color: var(--muted); }
+.sec-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.emp-table { width: 100%; border-collapse: collapse; }
+.emp-table td { padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: middle; }
+.emp-table td:first-child { width: 30%; }
+.emp-table b { font-weight: 600; }
+
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.table-wrap { overflow-x: auto; }
+table.entry { width: 100%; border-collapse: collapse; min-width: 560px; }
+.entry th, .entry td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.entry th { font-size: 12px; color: var(--muted); font-weight: 500; }
+.entry .r { text-align: right; }
+.entry td input[type="number"] { width: 130px; text-align: right; }
+.entry .grp td { background: var(--chip); font-weight: 650; color: var(--green); }
+.entry .emp td { font-weight: 600; padding-top: 12px; }
+
+.scrim { position: fixed; inset: 0; background: rgba(10,14,12,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; z-index: 10; }
+.sheet { background: var(--card); color: var(--text); border-radius: 14px; width: min(620px, 100%); padding: 20px; display: grid; gap: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sheet-head h3 { font-size: 18px; color: var(--green); }
+.x { border: 0; background: transparent; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.grid2 .wide { grid-column: 1 / -1; }
+.sheet-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
+.points { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.points table { width: 100%; border-collapse: collapse; }
+.points td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+.points .r { text-align: right; }
+.points input[type="number"] { width: 140px; text-align: right; }
+.box { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+textarea { width: 100%; min-height: 150px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+code { background: var(--chip); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--green); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100% - 32px); }
+@media (max-width: 560px) { .brand h1 { font-size: 22px; } .emp-table td:first-child { width: auto; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Prime Era · управление</span>
+      <h1>Статистика постов</h1>
+    </div>
+    <button class="btn ghost" id="btnSettings" type="button">Настройки</button>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="board">Панель управляющего</button>
+    <button type="button" role="tab" data-tab="org">Структура компании</button>
+    <button type="button" role="tab" data-tab="entry">Внести цифры</button>
+  </nav>
+
+  <section id="tab-board" class="dsec">
+    <div class="toolbar">
+      <div class="row">
+        <label class="field"><span>Показывать</span>
+          <select id="range">
+            <option value="8">8 последних периодов</option>
+            <option value="13">13 периодов</option>
+            <option value="26">26 периодов</option>
+            <option value="52">52 периода</option>
+            <option value="0">Всю историю</option>
+          </select></label>
+        <label class="field"><span>Отдел</span><select id="deptFilter"></select></label>
+        <label class="check" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="zero"> Шкала от нуля</label>
+      </div>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div id="board" class="dsec"></div>
+  </section>
+
+  <section id="tab-org" class="dsec" hidden>
+    <div class="toolbar">
+      <span class="hint">Отдел задаёт набор статистик. Сотрудникам отдела они назначаются автоматически, а на панели по ним строится общий график отдела.</span>
+      <button class="btn primary write-only" id="btnAddDept" type="button">+ Отдел</button>
+    </div>
+    <div id="orgList" class="dsec"></div>
+  </section>
+
+  <section id="tab-entry" class="panel" hidden>
+    <div class="toolbar">
+      <div class="row">
+        <label class="field"><span>Дата внутри периода</span><input type="date" id="entryDate"></label>
+        <span class="hint" id="entryHint" style="padding-bottom:8px"></span>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnExport" type="button">Выгрузить таблицу CSV</button>
+        <button class="btn write-only" id="btnImport" type="button">Импорт из таблицы</button>
+        <button class="btn primary write-only" id="btnSaveEntry" type="button">Сохранить цифры</button>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="entry">
+      <thead><tr><th>Статистика</th><th>Период</th><th class="r">Прошлый</th><th class="r">Сейчас</th></tr></thead>
+      <tbody id="entryBody"></tbody>
+    </table></div>
+  </section>
+</div>
+
+<div class="scrim" id="deptScrim" hidden>
+  <form class="sheet" id="deptForm" autocomplete="off">
+    <div class="sheet-head"><h3 id="deptTitle">Новый отдел</h3><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <label class="field"><span>Название отдела</span><input type="text" id="dName" required placeholder="Отдел продаж"></label>
+    <div class="box" id="dTemplateBox">
+      <span class="sec-label">Статистики отдела</span>
+      <span class="hint">Через запятую. Их получит каждый сотрудник отдела, единицы и план можно задать потом.</span>
+      <input type="text" id="dTemplate" placeholder="Исходящие, Созвоны, Доход">
+    </div>
+    <span class="hint" id="deptDelHint"></span>
+    <div class="sheet-foot">
+      <button class="btn danger" type="button" id="btnDelDept" hidden>Удалить отдел</button>
+      <div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit">Сохранить</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="metricScrim" hidden>
+  <form class="sheet" id="metricForm" autocomplete="off">
+    <div class="sheet-head"><h3 id="metricTitle">Статистика отдела</h3><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="grid2">
+      <label class="field wide"><span>Название</span><input type="text" id="mName" required placeholder="Доход"></label>
+      <label class="field"><span>Единица</span><input type="text" id="mUnit" placeholder="₽, шт, %"></label>
+      <label class="field"><span>Период</span><select id="mPeriod"><option value="week">Неделя</option><option value="day">День</option><option value="month">Месяц</option></select></label>
+      <label class="field"><span>Общий график отдела</span><select id="mAgg"><option value="sum">Сумма по сотрудникам</option><option value="avg">Среднее по сотрудникам</option></select></label>
+      <label class="field"><span>План отдела</span><input type="number" id="mTarget" step="any" placeholder="необязательно"></label>
+      <label class="field"><span>План на сотрудника</span><input type="number" id="mEmpTarget" step="any" placeholder="необязательно"></label>
+      <label class="check wide"><input type="checkbox" id="mInverse"> Чем меньше, тем лучше (долги, отказы, брак)</label>
+    </div>
+    <span class="hint">Изменения применятся ко всем сотрудникам отдела. Новая статистика сразу назначается всем.</span>
+    <div class="sheet-foot">
+      <button class="btn danger" type="button" id="btnDelMetric" hidden>Удалить у всех</button>
+      <div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit">Сохранить</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="empScrim" hidden>
+  <form class="sheet" id="empForm" autocomplete="off">
+    <div class="sheet-head"><h3 id="empTitle">Новый сотрудник</h3><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="grid2">
+      <label class="field"><span>Имя</span><input type="text" id="eName" required placeholder="Иван Петров"></label>
+      <label class="field"><span>Пост (должность)</span><input type="text" id="ePost" list="postList" placeholder="Менеджер по продажам"></label>
+      <label class="field wide"><span>Отдел</span><select id="eDept"></select></label>
+    </div>
+    <div class="box"><span class="sec-label">Статистики</span><div id="eMetrics" class="grid2"></div>
+      <label class="field"><span>Личные статистики, через запятую (необязательно)</span><input type="text" id="eExtra" placeholder="Например: Повторные продажи"></label></div>
+    <div class="sheet-foot">
+      <button class="btn danger" type="button" id="btnDelEmp" hidden>Удалить сотрудника</button>
+      <div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit">Сохранить</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="statScrim" hidden>
+  <form class="sheet" id="statForm" autocomplete="off">
+    <div class="sheet-head"><div><h3 id="statTitle"></h3><span class="hint" id="statSub"></span></div><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="grid2" id="statOwn">
+      <label class="field"><span>Название</span><input type="text" id="sName"></label>
+      <label class="field"><span>Единица</span><input type="text" id="sUnit"></label>
+      <label class="field"><span>Период</span><select id="sPeriod"><option value="week">Неделя</option><option value="day">День</option><option value="month">Месяц</option></select></label>
+      <label class="check"><input type="checkbox" id="sInverse"> Чем меньше, тем лучше</label>
+    </div>
+    <label class="field"><span>Личный план</span><input type="number" id="sTarget" step="any" placeholder="по умолчанию — план отдела на сотрудника"></label>
+    <div class="row" style="justify-content:space-between"><b>Значения</b>
+      <div class="row"><input type="date" id="newPointDate" aria-label="Дата"><input type="number" step="any" id="newPointVal" placeholder="Значение" style="width:120px" aria-label="Значение"><button class="btn sm" type="button" id="btnAddPoint">Добавить</button></div></div>
+    <div class="points"><table><tbody id="pointsBody"></tbody></table></div>
+    <div class="sheet-foot">
+      <button class="btn danger" type="button" id="btnDelStat">Удалить статистику</button>
+      <div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="submit">Сохранить</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="importScrim" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h3>Импорт из таблицы</h3><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="hint">Колонки: <code>дата</code> <code>сотрудник</code> <code>статистика</code> <code>значение</code>, по строке на каждую цифру. Тот же формат, что и у выгрузки CSV. Скопируйте из Excel или Google Таблиц вместе с заголовком и вставьте сюда, или выберите файл. Имена сотрудников и статистик должны совпадать с теми, что заведены в структуре.</div>
+    <input type="file" id="importFile" accept=".csv,.tsv,.txt">
+    <textarea id="importText" placeholder="дата	сотрудник	статистика	значение&#10;08.10.2026	Менеджер 1	Исходящие	120"></textarea>
+    <div class="hint" id="importPreview"></div>
+    <div class="sheet-foot"><span></span><div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="button" id="btnDoImport" disabled>Загрузить</button></div></div>
+  </div>
+</div>
+
+<div class="scrim" id="setScrim" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h3>Настройки</h3><button class="x" type="button" data-close aria-label="Закрыть">×</button></div>
+    <label class="field"><span>Отчётная неделя заканчивается в</span>
+      <select id="weekEnd"><option value="1">понедельник</option><option value="2">вторник</option><option value="3">среду</option><option value="4">четверг</option><option value="5">пятницу</option><option value="6">субботу</option><option value="0">воскресенье</option></select></label>
+    <label class="field"><span>Время окончания</span><input type="time" id="weekEndTime" step="60"></label>
+    <span class="hint">Например, четверг 14:00: цифры до 14:00 четверга идут в текущую неделю, после — уже в следующую. Пустое время — неделя длится до конца дня. Настройка общая для всей компании.</span>
+    <div class="sheet-foot"><span></span><div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="button" id="btnSetSave">Сохранить</button></div></div>
+  </div>
+</div>
+
+<div class="scrim" id="bigScrim" hidden>
+  <div class="sheet big">
+    <div class="sheet-head"><div><h3 id="bigTitle"></h3><span class="hint" id="bigSub"></span></div>
+      <div class="row"><select id="bigRange" aria-label="Сколько периодов показывать">
+        <option value="8">8 периодов</option><option value="13">13 периодов</option><option value="26">26 периодов</option><option value="52">52 периода</option><option value="0">Вся история</option></select>
+        <button class="x" type="button" data-close aria-label="Закрыть">×</button></div></div>
+    <div id="bigChart" role="img"></div>
+    <span class="hint" id="bigHint"></span>
+  </div>
+</div>
+
+<datalist id="postList"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+const fmtC = new Intl.NumberFormat("ru-RU", { notation: "compact", maximumFractionDigits: 1 });
+const num = (v) => { const s = String(v ?? "").replace(/[\s ₽%]/g, "").replace(",", "."); if (s === "") return null; const n = Number(s); return isFinite(n) ? n : null; };
+const pad = (n) => String(n).padStart(2, "0");
+const isoLocal = (x) => `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`;
+const today = () => isoLocal(new Date());
+const now = () => new Date().toISOString();
+const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const uidGen = () => Math.random().toString(36).slice(2, 10);
+const byName = (a, b) => (a.name || "").localeCompare(b.name || "", "ru");
+const plural = (n, a, b, c) => { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c; };
+
+const S = { depts: [], emps: [], stats: [], settings: { weekEnd: 4, weekEndTime: "" }, loaded: false,
+  range: 13, dept: "", zero: false, tab: "board", views: {}, collapsed: {} };
+try { const u = JSON.parse(localStorage.getItem("pe-org-ui") || "{}"); ["range", "dept", "zero", "tab", "views", "collapsed"].forEach((k) => { if (u[k] != null) S[k] = u[k]; }); } catch {}
+const saveUi = () => { try { localStorage.setItem("pe-org-ui", JSON.stringify({ range: S.range, dept: S.dept, zero: S.zero, tab: S.tab, views: S.views, collapsed: S.collapsed })); } catch {} };
+
+let db = null, downloads = null, canWrite = false;
+
+/* ---------- periods ---------- */
+function cutoffMin() { const t = S.settings.weekEndTime; if (!t) return 24 * 60; const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); }
+// week key = date the reporting week ends; today uses the current clock, other dates count from their start
+function periodKey(dstr, period) {
+  if (period === "day") return dstr;
+  if (period === "month") return dstr.slice(0, 7);
+  const x = dstr === today() ? new Date() : new Date(dstr + "T00:00:00");
+  const diff = (+S.settings.weekEnd - x.getDay() + 7) % 7;
+  const late = diff === 0 && x.getHours() * 60 + x.getMinutes() >= cutoffMin();
+  return isoLocal(new Date(x.getFullYear(), x.getMonth(), x.getDate() + diff + (late ? 7 : 0), 12));
+}
+function keyLabel(k, long) {
+  if (k.length === 7) { const [y, m] = k.split("-"); return `${MONTHS[+m - 1]} ${y.slice(2)}`; }
+  const [y, m, d] = k.split("-"); return long ? `${d}.${m}.${y}` : `${d}.${m}`;
+}
+function periodText(k, period) {
+  if (period === "week") return "неделя до " + keyLabel(k, true) + (S.settings.weekEndTime ? " " + S.settings.weekEndTime : "");
+  if (period === "month") { const [y, m] = k.split("-"); return `${MONTHS[+m - 1]} ${y}`; }
+  return keyLabel(k, true);
+}
+const valTxt = (v, unit) => v == null ? "—" : fmt.format(v) + (unit ? " " + unit : "");
+
+/* ---------- model ---------- */
+const deptById = (id) => S.depts.find((d) => d.id === id);
+const empsOf = (dept) => S.emps.filter((e) => e.deptId === dept.id).sort(byName);
+const metricOf = (st) => { const e = S.emps.find((x) => x.id === st.empId); const d = e && deptById(e.deptId); return d && st.metricId ? (d.metrics || []).find((m) => m.id === st.metricId) : null; };
+// department metrics own name/unit/period/direction of every linked employee statistic
+function eff(st) {
+  const m = metricOf(st);
+  return m ? { ...st, name: m.name, unit: m.unit, period: m.period || "week", inverse: !!m.inverse, target: st.target ?? m.empTarget ?? null, linked: true }
+    : { ...st, period: st.period || "week", linked: false };
+}
+function statsOfEmp(emp) {
+  const d = deptById(emp.deptId); const order = (d?.metrics || []).map((m) => m.id);
+  return S.stats.filter((s) => s.empId === emp.id).map(eff)
+    .sort((a, b) => { const ia = order.indexOf(a.metricId), ib = order.indexOf(b.metricId); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || byName(a, b); });
+}
+const sortedPts = (pts) => [...(pts || [])].sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+function deptSeries(dept, metric) {
+  const map = new Map();
+  for (const e of empsOf(dept)) { const st = S.stats.find((s) => s.empId === e.id && s.metricId === metric.id); if (!st) continue;
+    for (const p of st.points || []) { if (!map.has(p.d)) map.set(p.d, []); map.get(p.d).push({ name: e.name, v: p.v }); } }
+  return [...map].sort((a, b) => a[0] < b[0] ? -1 : 1).map(([d, parts]) => {
+    const sum = parts.reduce((a, p) => a + p.v, 0);
+    return { d, v: metric.agg === "avg" ? Math.round(sum / parts.length * 100) / 100 : sum, parts };
+  });
+}
+function trendOf(pts, inverse) {
+  if (!pts.length) return null;
+  const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+  if (!prev) return { last, cls: "flat", txt: "первая точка" };
+  const diff = last.v - prev.v; const pct = prev.v ? diff / Math.abs(prev.v) * 100 : null;
+  const good = inverse ? diff < 0 : diff > 0;
+  return { last, cls: diff === 0 ? "flat" : good ? "good" : "bad",
+    txt: `${diff > 0 ? "▲" : diff < 0 ? "▼" : "■"} ${pct == null ? fmt.format(Math.abs(diff)) : fmt.format(Math.abs(Math.round(pct * 10) / 10)) + "%"}` };
+}
+const sliceRange = (pts, rng = S.range) => +rng ? pts.slice(-rng) : pts;
+
+/* ---------- charts ---------- */
+const charts = [];
+function disposeCharts() { charts.forEach((c) => c.dispose()); charts.length = 0; }
+function baseOpt() {
+  const muted = cssVar("--muted"), grid = cssVar("--grid");
+  return { animation: false, backgroundColor: "transparent", textStyle: { fontFamily: cssVar("--font") },
+    grid: { left: 4, right: 20, top: 12, bottom: 4, containLabel: true },
+    tooltip: { trigger: "axis", backgroundColor: cssVar("--card"), borderColor: grid, textStyle: { color: cssVar("--text"), fontSize: 12 } },
+    yAxis: { type: "value", scale: !S.zero, splitLine: { lineStyle: { color: grid } },
+      axisLabel: { color: muted, fontSize: 11, formatter: (v) => Math.abs(v) >= 10000 ? fmtC.format(v) : fmt.format(v) } } };
+}
+function xAxis(keys) { return { type: "category", boundaryGap: false, data: keys.map((k) => keyLabel(k)),
+  axisLine: { lineStyle: { color: cssVar("--grid") } }, axisTick: { show: false }, axisLabel: { color: cssVar("--muted"), fontSize: 11, hideOverlap: true } }; }
+function planLine(target) {
+  if (target == null || target === "") return undefined; const gold = cssVar("--gold");
+  return { silent: true, symbol: "none", lineStyle: { color: gold, type: "dashed", width: 1.5 },
+    label: { color: gold, fontSize: 11, formatter: "план " + fmtC.format(target), position: "insideEndTop" }, data: [{ yAxis: +target }] };
+}
+// straight segments between points; each point coloured by the direction of the move into it
+function lineOpt(pts, { unit, period, inverse, target, color, partsTip }) {
+  const up = cssVar("--up"), down = cssVar("--down");
+  const data = pts.map((p, i) => { const prev = pts[i - 1]; let c = color;
+    if (prev && p.v !== prev.v) c = (inverse ? p.v < prev.v : p.v > prev.v) ? up : down;
+    return { value: p.v, itemStyle: { color: c } }; });
+  const o = baseOpt();
+  o.tooltip.formatter = (ps) => { const p = pts[ps[0].dataIndex];
+    let h = `${esc(periodText(p.d, period))}<br><b>${esc(valTxt(p.v, unit))}</b>`;
+    if (partsTip && p.parts) h += "<br>" + p.parts.map((x) => `${esc(x.name)}: ${esc(fmt.format(x.v))}`).join("<br>");
+    return h; };
+  o.xAxis = xAxis(pts.map((p) => p.d));
+  o.series = [{ type: "line", smooth: false, data, symbol: "circle", showAllSymbol: true,
+    symbolSize: (v, p) => p.dataIndex === pts.length - 1 ? 9 : 6, lineStyle: { width: 2, color }, markLine: planLine(target) }];
+  return o;
+}
+function compareOpt(dept, metric, rng) {
+  const emps = empsOf(dept); const palette = ["--s1", "--s2", "--s3", "--s4", "--s5", "--s6", "--s7"].map(cssVar);
+  const series = emps.map((e) => { const st = S.stats.find((s) => s.empId === e.id && s.metricId === metric.id); return { e, pts: sortedPts(st?.points) }; });
+  const keys = sliceRange([...new Set(series.flatMap((x) => x.pts.map((p) => p.d)))].sort(), rng);
+  const o = baseOpt(); o.color = palette; o.xAxis = xAxis(keys); o.grid.bottom = 28;
+  o.legend = { bottom: 0, textStyle: { color: cssVar("--muted"), fontSize: 11 }, icon: "roundRect", itemWidth: 10, itemHeight: 4, type: "scroll" };
+  o.tooltip.valueFormatter = (v) => v == null ? "—" : valTxt(v, metric.unit);
+  o.series = series.map(({ e, pts }, i) => { const m = new Map(pts.map((p) => [p.d, p.v]));
+    return { name: e.name, type: "line", smooth: false, connectNulls: true, symbol: "circle", symbolSize: 5, lineStyle: { width: 2 },
+      data: keys.map((k) => m.has(k) ? m.get(k) : null), markLine: i === 0 ? planLine(metric.empTarget) : undefined }; });
+  return { opt: o, has: keys.length > 0 };
+}
+/* spec: { title, sub, build(rng) -> { opt, pts }, pick(point) for editable charts } */
+const specs = {};
+function wire(c, spec, id, cur, big) {
+  // a point opens it for editing; empty chart area (or any click on read-only charts) opens the large view
+  c.on("click", (p) => { if (p.componentType !== "series") return; if (spec.pick && cur.pts?.[p.dataIndex]) { if (big) closeModals(); spec.pick(cur.pts[p.dataIndex]); } else if (!big) openBig(id); });
+  if (!big) c.getZr().on("click", (e) => { if (!e.target) openBig(id); });
+}
+function mount(id, spec) {
+  specs[id] = spec;
+  requestAnimationFrame(() => { const el = $(id); if (!el || !window.echarts) return;
+    const cur = spec.build(S.range); const c = echarts.init(el); c.setOption(cur.opt); charts.push(c);
+    wire(c, spec, id, cur, false); el.addEventListener("dblclick", () => openBig(id)); });
+}
+let bigChart = null, bigId = null;
+function openBig(id) {
+  const spec = specs[id]; if (!spec) return; bigId = id;
+  $("bigTitle").textContent = spec.title; $("bigSub").textContent = spec.sub || "";
+  $("bigRange").value = String(S.range);
+  $("bigHint").textContent = spec.pick && canWrite ? "Нажмите на точку, чтобы поправить значение. Колесо мыши или ползунок внизу — приблизить участок." : "Колесо мыши или ползунок внизу — приблизить участок.";
+  $("bigScrim").hidden = false; requestAnimationFrame(drawBig);
+}
+function drawBig() {
+  const spec = specs[bigId]; if (!spec || !window.echarts) return;
+  bigChart?.dispose(); bigChart = echarts.init($("bigChart"));
+  const cur = spec.build(+$("bigRange").value); const o = cur.opt;
+  o.grid = { ...o.grid, left: 10, right: 28, top: 28, bottom: (o.legend && o.legend.show !== false ? 34 : 0) + 44 };
+  if (o.legend && o.legend.show !== false) o.legend = { ...o.legend, bottom: 40, textStyle: { ...o.legend.textStyle, fontSize: 13 } };
+  o.dataZoom = [{ type: "inside" }, { type: "slider", bottom: 6, height: 22, borderColor: cssVar("--border"), textStyle: { color: cssVar("--muted") },
+    fillerColor: "rgba(184,150,62,.18)", handleStyle: { color: cssVar("--gold") }, dataBackground: { lineStyle: { color: cssVar("--muted") }, areaStyle: { color: cssVar("--chip") } } }];
+  o.xAxis = { ...o.xAxis, axisLabel: { ...o.xAxis.axisLabel, fontSize: 12 } };
+  o.yAxis = { ...o.yAxis, axisLabel: { ...o.yAxis.axisLabel, fontSize: 12 } };
+  (o.series || []).forEach((s) => { s.label = { show: (cur.pts?.length || 0) <= 26, position: "top", color: cssVar("--muted"), fontSize: 11, formatter: (p) => p.value == null ? "" : fmtC.format(p.value) }; if (o.series.length > 1) s.label.show = false; });
+  bigChart.setOption(o); wire(bigChart, spec, bigId, cur, true);
+}
+$("bigRange").addEventListener("change", drawBig);
+window.addEventListener("resize", () => bigChart?.resize());
+
+/* ---------- board ---------- */
+const qKey = {};
+function quickForm(st) {
+  const cur = periodKey(today(), st.period); const k = qKey[st.id] || cur; const editing = k !== cur;
+  return `<form class="quick" data-quick="${esc(st.id)}">
+    <span class="ql">${editing ? "Правка: " : ""}<b>${esc(periodText(k, st.period))}</b>${editing ? ` <button class="reset" type="button" data-act="qreset" data-id="${esc(st.id)}">к текущей</button>` : ""}</span>
+    <input type="number" step="any" inputmode="decimal" id="q-${esc(st.id)}" placeholder="Значение" aria-label="Значение: ${esc(st.name)}">
+    <button class="btn sm primary" type="submit">Внести</button></form>`;
+}
+function summaryHtml(depts) {
+  const emps = depts.flatMap(empsOf); const sts = emps.flatMap(statsOfEmp);
+  const tr = sts.map((s) => trendOf(sortedPts(s.points), s.inverse));
+  const good = tr.filter((t) => t?.cls === "good").length, bad = tr.filter((t) => t?.cls === "bad").length;
+  const missing = sts.filter((s) => { const p = sortedPts(s.points); return !p.length || p[p.length - 1].d < periodKey(today(), s.period); });
+  const who = [...new Set(missing.map((s) => S.emps.find((e) => e.id === s.empId)?.name).filter(Boolean))];
+  return `<div class="sum"><b class="num">${depts.length}</b><span>${plural(depts.length, "отдел", "отдела", "отделов")} · ${emps.length} ${plural(emps.length, "сотрудник", "сотрудника", "сотрудников")}</span></div>
+    <div class="sum good"><b class="num">${good}</b><span>статистик растут к прошлому периоду</span></div>
+    <div class="sum bad"><b class="num">${bad}</b><span>статистик падают к прошлому периоду</span></div>
+    <div class="sum warn"><b class="num">${missing.length}</b><span>без цифр за текущий период</span>${who.length ? `<span class="who">${who.map(esc).join(", ")}</span>` : ""}</div>`;
+}
+function renderBoard() {
+  const typed = {}; document.querySelectorAll(".quick input").forEach((i) => { if (i.value) typed[i.id] = i.value; });
+  const focused = document.activeElement?.id;
+  disposeCharts();
+  $("range").value = String(S.range); $("zero").checked = !!S.zero;
+  const all = [...S.depts].sort(byName);
+  if (S.loaded && S.dept && !deptById(S.dept)) S.dept = "";
+  $("deptFilter").innerHTML = `<option value="">Все отделы</option>` + all.map((d) => `<option value="${esc(d.id)}" ${d.id === S.dept ? "selected" : ""}>${esc(d.name)}</option>`).join("");
+  const depts = S.dept ? all.filter((d) => d.id === S.dept) : all;
+  $("summary").hidden = !depts.length; $("summary").innerHTML = depts.length ? summaryHtml(depts) : "";
+  if (!S.loaded) { $("board").innerHTML = `<div class="empty-state"><span>Загружаем данные компании…</span></div>`; return; }
+  if (!all.length) { $("board").innerHTML = `<div class="empty-state"><h3>Структура пока пустая</h3><span>Создайте отдел, задайте его статистики и добавьте сотрудников. Графики появятся здесь.</span>${canWrite ? `<button class="btn primary" type="button" data-act="adddept">+ Отдел</button>` : ""}</div>`; return; }
+  const total = cssVar("--total"), line = cssVar("--line");
+  let html = ""; const mounts = [];
+  for (const d of depts) {
+    const emps = empsOf(d); const metrics = d.metrics || []; const view = S.views[d.id] || "emps"; const closed = !!S.collapsed[d.id];
+    html += `<section class="dsec" data-dept="${esc(d.id)}">
+      <div class="dsec-head"><h2><button class="collapse" type="button" data-act="collapse" aria-expanded="${!closed}" aria-label="Свернуть или развернуть отдел">${closed ? "▸" : "▾"}</button>${esc(d.name)} <small>${emps.length} ${plural(emps.length, "сотрудник", "сотрудника", "сотрудников")}</small></h2>
+        <div class="seg" role="group" aria-label="Вид"><button type="button" data-act="view" data-v="emps" aria-pressed="${view === "emps"}">По сотрудникам</button><button type="button" data-act="view" data-v="cmp" aria-pressed="${view === "cmp"}">Сравнение</button></div></div>`;
+    if (closed) { html += `</section>`; continue; }
+    if (metrics.length) {
+      html += `<div class="subhead"><h3>Весь отдел</h3><span class="hint">считается автоматически по сотрудникам</span></div><div class="cards">`;
+      for (const m of metrics) {
+        const full = deptSeries(d, m); const pts = sliceRange(full); const t = trendOf(full, m.inverse);
+        const per = m.period || "week"; const cur = periodKey(today(), per); const curP = full.find((p) => p.d === cur);
+        const id = `c-${d.id}-${m.id}`;
+        html += `<article class="card total"><div class="card-head"><div><h4>${esc(m.name)}</h4><span class="meta">${m.agg === "avg" ? "среднее" : "сумма"} · ${esc(d.name)}</span></div>
+          <div class="last"><b class="num">${t ? esc(valTxt(t.last.v, m.unit)) : "—"}</b>${t ? `<span class="delta ${t.cls}">${esc(t.txt)}</span>` : ""}</div></div>
+          ${pts.length ? `<div class="ch" id="${id}" role="img" aria-label="Общий график: ${esc(m.name)}"></div>` : `<div class="ch-empty">Появится, когда сотрудники внесут цифры</div>`}
+          <div class="card-foot"><span class="hint">За ${esc(periodText(cur, per))}: внесли ${curP ? curP.parts.length : 0} из ${emps.length}</span>${pts.length ? `<button class="zoom" type="button" data-act="big" data-id="${id}" title="Открыть крупно" aria-label="Открыть крупно">⤢</button>` : ""}</div></article>`;
+        if (pts.length) mounts.push([id, { title: `${m.name} · ${d.name}`, sub: `${m.agg === "avg" ? "Среднее" : "Сумма"} по сотрудникам отдела`,
+          build: (rng) => { const p = sliceRange(full, rng); return { pts: p, opt: lineOpt(p, { unit: m.unit, period: per, inverse: m.inverse, target: m.target, color: total, partsTip: true }) }; } }]);
+      }
+      html += `</div>`;
+    }
+    if (!emps.length) { html += `<div class="empty-state"><span>В отделе пока нет сотрудников.</span>${canWrite ? `<button class="btn" type="button" data-act="addemp">+ Сотрудник</button>` : ""}</div></section>`; continue; }
+    if (view === "cmp" && metrics.length) {
+      html += `<div class="subhead"><h3>Сотрудники рядом</h3><span class="hint">каждая линия — сотрудник</span></div><div class="cards">`;
+      for (const m of metrics) { const id = `p-${d.id}-${m.id}`; const { has } = compareOpt(d, m, S.range);
+        html += `<article class="card"><div class="card-head"><div><h4>${esc(m.name)}</h4><span class="meta">по сотрудникам${m.unit ? " · " + esc(m.unit) : ""}</span></div></div>
+          ${has ? `<div class="ch" id="${id}" style="height:220px"></div><div class="card-foot"><span class="hint">Нажмите на график, чтобы открыть крупно</span><button class="zoom" type="button" data-act="big" data-id="${id}" title="Открыть крупно" aria-label="Открыть крупно">⤢</button></div>` : `<div class="ch-empty">Нет цифр</div>`}</article>`;
+        if (has) mounts.push([id, { title: `${m.name}: сравнение сотрудников`, sub: d.name, build: (rng) => ({ opt: compareOpt(d, m, rng).opt, pts: null }) }]); }
+      html += `</div>`;
+    } else {
+      for (const e of emps) {
+        const sts = statsOfEmp(e);
+        html += `<div class="emp-block"><div class="emp-name"><b>${esc(e.name)}</b><span class="hint">${esc(e.post || "")}</span></div>`;
+        if (!sts.length) { html += `<span class="hint">Статистики не назначены.</span></div>`; continue; }
+        html += `<div class="cards">`;
+        for (const st of sts) {
+          const full = sortedPts(st.points); const pts = sliceRange(full); const t = trendOf(full, st.inverse); const id = `s-${st.id}`;
+          html += `<article class="card" data-stat="${esc(st.id)}"><div class="card-head"><div><h4>${esc(st.name)}</h4><span class="meta">${esc(e.name)}${st.unit ? " · " + esc(st.unit) : ""}</span></div>
+            <div class="last"><b class="num">${t ? esc(valTxt(t.last.v, st.unit)) : "—"}</b>${t ? `<span class="delta ${t.cls}">${esc(t.txt)}</span>` : ""}</div></div>
+            ${pts.length ? `<div class="ch click" id="${id}" role="img" aria-label="График: ${esc(st.name)}, ${esc(e.name)}"></div>` : `<div class="ch-empty">Внесите первую цифру ниже</div>`}
+            ${canWrite ? quickForm(st) : ""}
+            <div class="card-foot"><span class="hint">${pts.length ? (canWrite ? "Точка — правка, график — крупно" : "Нажмите на график, чтобы открыть крупно") : ""}</span><div class="row" style="gap:2px">${pts.length ? `<button class="zoom" type="button" data-act="big" data-id="${id}" title="Открыть крупно" aria-label="Открыть крупно">⤢</button>` : ""}<button class="btn sm ghost" type="button" data-act="open">Все цифры</button></div></div></article>`;
+          if (pts.length) mounts.push([id, { title: `${st.name} · ${e.name}`, sub: [e.post, st.unit].filter(Boolean).join(" · "),
+            build: (rng) => { const p = sliceRange(full, rng); return { pts: p, opt: lineOpt(p, { unit: st.unit, period: st.period, inverse: st.inverse, target: st.target, color: line }) }; },
+            pick: canWrite ? (pt) => { qKey[st.id] = pt.d; renderBoard(); requestAnimationFrame(() => { const inp = $("q-" + st.id); if (inp) { inp.scrollIntoView({ block: "center" }); inp.value = pt.v; inp.focus(); inp.select(); } }); } : null }]);
+        }
+        html += `</div></div>`;
+      }
+    }
+    html += `</section>`;
+  }
+  $("board").innerHTML = html;
+  mounts.forEach(([id, spec]) => mount(id, spec));
+  Object.entries(typed).forEach(([id, v]) => { const i = $(id); if (i) i.value = v; });
+  if (focused && $(focused)) $(focused).focus();
+}
+$("board").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act; const deptId = b.closest("[data-dept]")?.dataset.dept;
+  if (act === "adddept") return openDept(null);
+  if (act === "addemp") return openEmp(null, deptId);
+  if (act === "collapse") { S.collapsed[deptId] = !S.collapsed[deptId]; saveUi(); return renderBoard(); }
+  if (act === "view") { S.views[deptId] = b.dataset.v; saveUi(); return renderBoard(); }
+  if (act === "qreset") { delete qKey[b.dataset.id]; return renderBoard(); }
+  if (act === "big") return openBig(b.dataset.id);
+  if (act === "open") return openStat(S.stats.find((s) => s.id === b.closest("[data-stat]").dataset.stat));
+});
+$("board").addEventListener("submit", async (e) => {
+  const f = e.target.closest("[data-quick]"); if (!f) return; e.preventDefault();
+  const raw = S.stats.find((s) => s.id === f.dataset.quick); if (!raw || !db) return;
+  const st = eff(raw); const inp = $("q-" + st.id); const v = num(inp.value); if (v === null) { inp.focus(); return; }
+  const k = qKey[st.id] || periodKey(today(), st.period);
+  const points = sortedPts((raw.points || []).filter((p) => p.d !== k).concat({ d: k, v }));
+  const btn = f.querySelector("button[type=submit]"); btn.disabled = true;
+  try { await db.doc("stats/" + st.id).update({ points, updatedAt: now() }); delete qKey[st.id]; inp.value = "";
+    toast(`${st.name}: ${valTxt(v, st.unit)} за ${periodText(k, st.period)}`); }
+  catch (err) { handleWriteError(err); } finally { btn.disabled = false; }
+});
+$("range").addEventListener("change", (e) => { S.range = +e.target.value; saveUi(); renderBoard(); });
+$("deptFilter").addEventListener("change", (e) => { S.dept = e.target.value; saveUi(); renderBoard(); });
+$("zero").addEventListener("change", (e) => { S.zero = e.target.checked; saveUi(); renderBoard(); });
+
+/* ---------- structure ---------- */
+function renderOrg() {
+  const el = $("orgList"); const depts = [...S.depts].sort(byName);
+  const unassigned = S.emps.filter((e) => !deptById(e.deptId));
+  if (!depts.length) { el.innerHTML = `<div class="empty-state"><h3>Отделов пока нет</h3><span>Начните с отдела, например «Отдел продаж», и перечислите его статистики.</span>${canWrite ? `<button class="btn primary" type="button" data-act="adddept">+ Отдел</button>` : ""}</div>`; return; }
+  el.innerHTML = depts.map((d) => { const emps = empsOf(d);
+    return `<article class="dept-card" data-dept="${esc(d.id)}">
+      <header><h2>${esc(d.name)}</h2>${canWrite ? `<div class="row"><button class="btn sm ghost" type="button" data-act="editdept">Переименовать</button><button class="btn sm" type="button" data-act="addemp">+ Сотрудник</button></div>` : ""}</header>
+      <div class="dsec" style="gap:6px"><span class="sec-label">Статистики отдела</span><div class="chips">
+        ${(d.metrics || []).map((m) => `<button class="chip" type="button" data-act="metric" data-m="${esc(m.id)}">${esc(m.name)}${m.unit ? ` <small>${esc(m.unit)}</small>` : ""}${m.target != null ? ` <small>· план ${esc(fmtC.format(m.target))}</small>` : ""}</button>`).join("")}
+        ${canWrite ? `<button class="chip add" type="button" data-act="metric">+ статистика</button>` : ""}</div></div>
+      <div class="dsec" style="gap:6px"><span class="sec-label">Сотрудники</span>
+        ${emps.length ? `<div class="table-wrap"><table class="emp-table">${emps.map((e) => `<tr data-emp="${esc(e.id)}"><td><b>${esc(e.name)}</b><br><span class="hint">${esc(e.post || "")}</span></td>
+          <td><div class="chips">${statsOfEmp(e).map((s) => `<button class="chip" type="button" data-act="stat" data-s="${esc(s.id)}">${esc(s.name)}${s.linked ? "" : " <small>личная</small>"}</button>`).join("") || `<span class="hint">нет статистик</span>`}</div></td>
+          <td style="text-align:right">${canWrite ? `<button class="btn sm ghost" type="button" data-act="editemp">Изменить</button>` : ""}</td></tr>`).join("")}</table></div>`
+          : `<span class="hint">Пока никого. Нажмите «+ Сотрудник».</span>`}</div>
+    </article>`; }).join("") +
+    (unassigned.length ? `<article class="dept-card"><header><h2>Без отдела</h2></header><table class="emp-table">${unassigned.map((e) => `<tr data-emp="${esc(e.id)}"><td><b>${esc(e.name)}</b></td><td></td><td style="text-align:right">${canWrite ? `<button class="btn sm ghost" type="button" data-act="editemp">Назначить отдел</button>` : ""}</td></tr>`).join("")}</table></article>` : "");
+}
+$("orgList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const deptId = b.closest("[data-dept]")?.dataset.dept; const empId = b.closest("[data-emp]")?.dataset.emp; const act = b.dataset.act;
+  if (act === "adddept") openDept(null);
+  if (act === "editdept") openDept(deptById(deptId));
+  if (act === "addemp") openEmp(null, deptId);
+  if (act === "editemp") openEmp(S.emps.find((x) => x.id === empId));
+  if (act === "metric") openMetric(deptById(deptId), b.dataset.m);
+  if (act === "stat") openStat(S.stats.find((s) => s.id === b.dataset.s));
+});
+$("btnAddDept").addEventListener("click", () => openDept(null));
+
+async function createStat(emp, metric, extra = {}) {
+  await db.collection("stats").doc().set({ empId: emp.id, metricId: metric?.id || null, name: metric?.name || extra.name, unit: metric?.unit || extra.unit || "",
+    period: metric?.period || extra.period || "week", inverse: !!(metric?.inverse || extra.inverse), target: null, points: [], createdAt: now(), updatedAt: now() });
+}
+
+/* department */
+let editDept = null;
+function openDept(d) {
+  if (!canWrite) return;
+  editDept = d; $("deptTitle").textContent = d ? "Отдел" : "Новый отдел";
+  $("dName").value = d?.name || ""; $("dTemplate").value = ""; $("dTemplateBox").hidden = !!d;
+  const n = d ? empsOf(d).length : 0;
+  $("deptDelHint").textContent = d && n ? `Чтобы удалить отдел, сначала переведите или удалите сотрудников (${n}).` : "";
+  const del = $("btnDelDept"); del.hidden = !d; del.disabled = n > 0; del.classList.remove("armed"); del.textContent = "Удалить отдел";
+  $("deptScrim").hidden = false; $("dName").focus();
+}
+$("deptForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!db || !canWrite) return;
+  const name = $("dName").value.trim();
+  try {
+    if (editDept) await db.doc("depts/" + editDept.id).update({ name, updatedAt: now() });
+    else {
+      const metrics = $("dTemplate").value.split(",").map((s) => s.trim()).filter(Boolean)
+        .map((n) => ({ id: uidGen(), name: n, unit: /доход|выручк|сумм|оплат/i.test(n) ? "₽" : "шт", period: "week", agg: "sum", inverse: false, target: null, empTarget: null }));
+      await db.collection("depts").doc().set({ name, metrics, createdAt: now(), updatedAt: now() });
+    }
+    closeModals(); toast(editDept ? "Отдел переименован" : "Отдел создан. Теперь добавьте сотрудников.");
+  } catch (err) { handleWriteError(err); }
+});
+$("btnDelDept").addEventListener("click", async () => {
+  const b = $("btnDelDept"); if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Точно удалить?"; return; }
+  try { await db.doc("depts/" + editDept.id).delete(); closeModals(); toast("Отдел удалён"); } catch (err) { handleWriteError(err); }
+});
+
+/* department metric */
+let mDept = null, mId = null;
+function openMetric(d, id) {
+  if (!canWrite || !d) return;
+  mDept = d; mId = id || null; const m = id ? (d.metrics || []).find((x) => x.id === id) : null;
+  $("metricTitle").textContent = m ? `${m.name} · ${d.name}` : `Новая статистика · ${d.name}`;
+  $("mName").value = m?.name || ""; $("mUnit").value = m?.unit || ""; $("mPeriod").value = m?.period || "week"; $("mAgg").value = m?.agg || "sum";
+  $("mTarget").value = m?.target ?? ""; $("mEmpTarget").value = m?.empTarget ?? ""; $("mInverse").checked = !!m?.inverse;
+  const del = $("btnDelMetric"); del.hidden = !m; del.classList.remove("armed"); del.textContent = "Удалить у всех";
+  $("metricScrim").hidden = false; $("mName").focus();
+}
+$("metricForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!db) return;
+  const m = { id: mId || uidGen(), name: $("mName").value.trim(), unit: $("mUnit").value.trim(), period: $("mPeriod").value, agg: $("mAgg").value,
+    target: num($("mTarget").value), empTarget: num($("mEmpTarget").value), inverse: $("mInverse").checked };
+  const metrics = (mDept.metrics || []).map((x) => x.id === m.id ? m : x); if (!mId) metrics.push(m);
+  try {
+    await db.doc("depts/" + mDept.id).update({ metrics, updatedAt: now() });
+    for (const emp of empsOf(mDept)) {
+      const st = S.stats.find((s) => s.empId === emp.id && s.metricId === m.id);
+      if (!st) await createStat(emp, m);
+      else await db.doc("stats/" + st.id).update({ name: m.name, unit: m.unit, period: m.period, inverse: m.inverse, updatedAt: now() });
+    }
+    closeModals(); toast(mId ? "Статистика обновлена у всех сотрудников" : "Статистика добавлена всем сотрудникам отдела");
+  } catch (err) { handleWriteError(err); }
+});
+$("btnDelMetric").addEventListener("click", async () => {
+  const b = $("btnDelMetric"); const linked = S.stats.filter((s) => s.metricId === mId && empsOf(mDept).some((e) => e.id === s.empId));
+  if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = `Удалить вместе с цифрами у ${linked.length}?`; return; }
+  try { for (const s of linked) await db.doc("stats/" + s.id).delete();
+    await db.doc("depts/" + mDept.id).update({ metrics: mDept.metrics.filter((x) => x.id !== mId), updatedAt: now() });
+    closeModals(); toast("Статистика удалена"); } catch (err) { handleWriteError(err); }
+});
+
+/* employee */
+let editEmp = null;
+function renderEmpMetrics() {
+  const d = deptById($("eDept").value); const own = editEmp ? S.stats.filter((s) => s.empId === editEmp.id) : [];
+  $("eMetrics").innerHTML = (d?.metrics || []).map((m) => { const has = own.some((s) => s.metricId === m.id || (eff(s).name || "").toLowerCase() === m.name.toLowerCase());
+    return `<label class="check"><input type="checkbox" value="${esc(m.id)}" ${has || !editEmp ? "checked" : ""} ${has ? "disabled" : ""}> ${esc(m.name)}</label>`; }).join("")
+    || `<span class="hint">У отдела пока нет статистик.</span>`;
+}
+function openEmp(emp, deptId) {
+  if (!canWrite) return;
+  if (!S.depts.length) { toast("Сначала создайте отдел"); return; }
+  editEmp = emp; $("empTitle").textContent = emp ? emp.name : "Новый сотрудник";
+  $("eName").value = emp?.name || ""; $("ePost").value = emp?.post || ""; $("eExtra").value = "";
+  $("eDept").innerHTML = [...S.depts].sort(byName).map((d) => `<option value="${esc(d.id)}">${esc(d.name)}</option>`).join("");
+  $("eDept").value = emp?.deptId && deptById(emp.deptId) ? emp.deptId : deptId || S.depts[0]?.id || "";
+  $("postList").innerHTML = [...new Set(S.emps.map((e) => e.post).filter(Boolean))].map((p) => `<option value="${esc(p)}">`).join("");
+  const del = $("btnDelEmp"); del.hidden = !emp; del.classList.remove("armed"); del.textContent = "Удалить сотрудника";
+  renderEmpMetrics(); $("empScrim").hidden = false; $("eName").focus();
+}
+$("eDept").addEventListener("change", renderEmpMetrics);
+$("empForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!db) return;
+  const body = { name: $("eName").value.trim(), post: $("ePost").value.trim(), deptId: $("eDept").value, updatedAt: now() };
+  const d = deptById(body.deptId);
+  const chosen = [...$("eMetrics").querySelectorAll("input:checked:not(:disabled)")].map((i) => (d?.metrics || []).find((m) => m.id === i.value)).filter(Boolean);
+  const extra = $("eExtra").value.split(",").map((s) => s.trim()).filter(Boolean);
+  try {
+    let emp = editEmp;
+    if (emp) {
+      await db.doc("employees/" + emp.id).update(body);
+      if (emp.deptId !== body.deptId) // moved: relink statistics to same-named metrics of the new department
+        for (const s of S.stats.filter((x) => x.empId === emp.id)) { const name = eff(s).name; const m = (d?.metrics || []).find((x) => x.name.toLowerCase() === (name || "").toLowerCase());
+          await db.doc("stats/" + s.id).update({ metricId: m ? m.id : null, name, updatedAt: now() }); }
+      emp = { ...emp, ...body };
+    } else { const ref = db.collection("employees").doc(); await ref.set({ ...body, createdAt: now() }); emp = { id: ref.id, ...body }; }
+    for (const m of chosen) await createStat(emp, m);
+    for (const n of extra) await createStat(emp, null, { name: n });
+    closeModals(); toast(editEmp ? "Сотрудник обновлён" : "Сотрудник добавлен, статистики назначены");
+  } catch (err) { handleWriteError(err); }
+});
+$("btnDelEmp").addEventListener("click", async () => {
+  const b = $("btnDelEmp"); const own = S.stats.filter((s) => s.empId === editEmp.id);
+  if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = `Удалить вместе с цифрами (${own.length})?`; return; }
+  try { for (const s of own) await db.doc("stats/" + s.id).delete(); await db.doc("employees/" + editEmp.id).delete(); closeModals(); toast("Сотрудник удалён"); }
+  catch (err) { handleWriteError(err); }
+});
+
+/* statistic values */
+let editStat = null, draft = [];
+function openStat(raw) {
+  if (!raw) return; const st = eff(raw); editStat = st; draft = sortedPts(raw.points).map((p) => ({ ...p }));
+  const emp = S.emps.find((e) => e.id === st.empId);
+  $("statTitle").textContent = st.name; $("statSub").textContent = `${emp?.name || ""}${st.linked ? " · статистика отдела" : " · личная статистика"}`;
+  $("statOwn").hidden = st.linked;
+  $("sName").value = st.name || ""; $("sUnit").value = st.unit || ""; $("sPeriod").value = st.period; $("sInverse").checked = !!st.inverse;
+  $("sTarget").value = raw.target ?? ""; $("newPointDate").value = today(); $("newPointVal").value = "";
+  const del = $("btnDelStat"); del.classList.remove("armed"); del.textContent = "Удалить статистику";
+  [...$("statForm").elements].forEach((el) => { if (el.dataset.close === undefined) el.disabled = !canWrite; });
+  renderPoints(); $("statScrim").hidden = false;
+}
+function renderPoints() {
+  const period = editStat.linked ? editStat.period : $("sPeriod").value;
+  $("pointsBody").innerHTML = draft.length ? [...draft].reverse().map((p) => `<tr><td>${esc(periodText(p.d, period))}</td>
+    <td class="r"><input type="number" step="any" value="${p.v}" data-pd="${esc(p.d)}" aria-label="Значение" ${canWrite ? "" : "disabled"}></td>
+    <td class="r"><button class="btn sm ghost" type="button" data-del="${esc(p.d)}" ${canWrite ? "" : "disabled"} aria-label="Удалить значение">✕</button></td></tr>`).join("")
+    : `<tr><td class="hint" style="padding:14px">Значений пока нет.</td></tr>`;
+}
+$("sPeriod").addEventListener("change", renderPoints);
+$("pointsBody").addEventListener("input", (e) => { const d = e.target.dataset.pd; if (!d) return; const p = draft.find((x) => x.d === d); const v = num(e.target.value); if (p && v !== null) p.v = v; });
+$("pointsBody").addEventListener("click", (e) => { const d = e.target.closest("[data-del]")?.dataset.del; if (!d) return; draft = draft.filter((p) => p.d !== d); renderPoints(); });
+$("btnAddPoint").addEventListener("click", () => {
+  const v = num($("newPointVal").value); if (v === null) { $("newPointVal").focus(); return; }
+  const k = periodKey($("newPointDate").value || today(), editStat.linked ? editStat.period : $("sPeriod").value);
+  draft = sortedPts(draft.filter((p) => p.d !== k).concat({ d: k, v })); $("newPointVal").value = ""; renderPoints();
+});
+$("newPointVal").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("btnAddPoint").click(); } });
+$("statForm").addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!db || !canWrite) return;
+  if (num($("newPointVal").value) !== null) $("btnAddPoint").click();
+  const body = { points: draft, target: num($("sTarget").value), updatedAt: now() };
+  if (!editStat.linked) Object.assign(body, { name: $("sName").value.trim(), unit: $("sUnit").value.trim(), period: $("sPeriod").value, inverse: $("sInverse").checked });
+  try { await db.doc("stats/" + editStat.id).update(body); closeModals(); toast("Сохранено"); } catch (err) { handleWriteError(err); }
+});
+$("btnDelStat").addEventListener("click", async () => {
+  const b = $("btnDelStat"); if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Удалить со всей историей?"; return; }
+  try { await db.doc("stats/" + editStat.id).delete(); closeModals(); toast("Статистика удалена"); } catch (err) { handleWriteError(err); }
+});
+
+/* ---------- entry ---------- */
+function renderEntry() {
+  if (!$("entryDate").value) $("entryDate").value = today();
+  const d = $("entryDate").value; $("entryHint").textContent = `Недельные статистики: ${periodText(periodKey(d, "week"), "week")}`;
+  let html = "";
+  for (const dept of [...S.depts].sort(byName)) {
+    const emps = empsOf(dept).filter((e) => statsOfEmp(e).length); if (!emps.length) continue;
+    html += `<tr class="grp"><td colspan="4">${esc(dept.name)}</td></tr>`;
+    for (const e of emps) {
+      html += `<tr class="emp"><td colspan="4">${esc(e.name)} <span class="hint">${esc(e.post || "")}</span></td></tr>`;
+      for (const s of statsOfEmp(e)) { const k = periodKey(d, s.period); const pts = sortedPts(s.points);
+        const curP = pts.find((p) => p.d === k); const prevP = [...pts].reverse().find((p) => p.d < k);
+        html += `<tr><td>${esc(s.name)}${s.unit ? `, <span class="hint">${esc(s.unit)}</span>` : ""}</td><td class="hint">${esc(periodText(k, s.period))}</td>
+          <td class="r num">${prevP ? esc(fmt.format(prevP.v)) : "—"}</td>
+          <td class="r"><input type="number" step="any" inputmode="decimal" data-entry="${esc(s.id)}" id="en-${esc(s.id)}" value="${curP ? curP.v : ""}" ${canWrite ? "" : "disabled"} aria-label="${esc(e.name)}: ${esc(s.name)}"></td></tr>`; }
+    }
+  }
+  $("entryBody").innerHTML = html || `<tr><td colspan="4" class="hint" style="text-align:center;padding:24px">Добавьте отделы и сотрудников, и здесь появится таблица для внесения цифр.</td></tr>`;
+}
+$("entryDate").addEventListener("change", renderEntry);
+$("btnSaveEntry").addEventListener("click", async () => {
+  if (!db) return; const d = $("entryDate").value; const btn = $("btnSaveEntry"); btn.disabled = true; let n = 0;
+  try {
+    for (const inp of document.querySelectorAll("[data-entry]")) {
+      const raw = S.stats.find((s) => s.id === inp.dataset.entry); if (!raw) continue; const st = eff(raw);
+      const k = periodKey(d, st.period); const v = num(inp.value); const old = (raw.points || []).find((p) => p.d === k);
+      if ((v === null && !old) || (old && v === old.v)) continue;
+      const points = (raw.points || []).filter((p) => p.d !== k); if (v !== null) points.push({ d: k, v });
+      await db.doc("stats/" + raw.id).update({ points: sortedPts(points), updatedAt: now() }); n++;
+    }
+    toast(n ? `Сохранено: ${n} ${plural(n, "значение", "значения", "значений")}` : "Нечего сохранять: цифры не менялись");
+  } catch (err) { handleWriteError(err); } finally { btn.disabled = false; }
+});
+
+/* ---------- export: one row per value, same shape as a server table ---------- */
+$("btnExport").addEventListener("click", async () => {
+  const cell = (v) => { const s = String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const rows = [["дата", "отдел", "сотрудник", "пост", "статистика", "единица", "период", "значение"]];
+  for (const raw of S.stats) { const st = eff(raw); const emp = S.emps.find((e) => e.id === st.empId); const dep = emp && deptById(emp.deptId);
+    for (const p of sortedPts(st.points)) rows.push([p.d.length === 7 ? p.d + "-01" : p.d, dep?.name, emp?.name, emp?.post, st.name, st.unit, st.period, String(p.v).replace(".", ",")]); }
+  if (rows.length < 2) return toast("Пока нечего выгружать: цифр ещё нет");
+  if (!downloads) return toast("Скачивание недоступно в этом просмотре");
+  try { await downloads.save({ filename: `statistiki-${today()}.csv`, data: new Blob(["﻿" + rows.map((r) => r.map(cell).join(";")).join("\n")], { type: "text/csv" }) }); toast("Таблица сохранена"); }
+  catch (err) { if (err?.code !== "declined") toast("Не удалось сохранить файл"); }
+});
+
+/* ---------- import (long format) ---------- */
+function splitLines(text) {
+  const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim()); if (lines.length < 2) return null;
+  const sep = lines[0].includes("\t") ? "\t" : (lines[0].split(";").length > lines[0].split(",").length ? ";" : ",");
+  const split = (line) => { const out = []; let cur = "", q = false;
+    for (let i = 0; i < line.length; i++) { const c = line[i];
+      if (q) { if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true; else if (c === sep) { out.push(cur); cur = ""; } else cur += c; }
+    out.push(cur); return out.map((s) => s.trim()); };
+  return lines.map(split);
+}
+function normDate(s) { s = String(s || "").trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  if ((m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2,4})/))) return `${m[3].length === 2 ? "20" + m[3] : m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  return null; }
+let importPlan = null;
+function previewImport() {
+  const rows = splitLines($("importText").value); importPlan = null; $("btnDoImport").disabled = true;
+  if (!rows) { $("importPreview").textContent = $("importText").value.trim() ? "Нужны заголовок и хотя бы одна строка." : ""; return; }
+  const head = rows[0].map((h) => h.toLowerCase().replace(/^﻿/, ""));
+  const col = (names) => head.findIndex((h) => names.includes(h));
+  const ci = { d: col(["дата", "date", "неделя", "период"]), e: col(["сотрудник", "имя", "менеджер", "employee"]), s: col(["статистика", "показатель", "метрика"]), v: col(["значение", "value", "цифра"]) };
+  if (Object.values(ci).some((x) => x < 0)) { $("importPreview").textContent = "Не нашли колонки дата, сотрудник, статистика, значение. Проверьте заголовок."; return; }
+  const plan = new Map(); const miss = new Set(); let ok = 0;
+  for (const r of rows.slice(1)) {
+    const date = normDate(r[ci.d]); const v = num(r[ci.v]); if (!date || v === null) continue;
+    const emp = S.emps.find((e) => e.name.trim().toLowerCase() === (r[ci.e] || "").trim().toLowerCase());
+    const st = emp && statsOfEmp(emp).find((s) => s.name.trim().toLowerCase() === (r[ci.s] || "").trim().toLowerCase());
+    if (!st) { miss.add(`${r[ci.e]} / ${r[ci.s]}`); continue; }
+    if (!plan.has(st.id)) plan.set(st.id, new Map()); plan.get(st.id).set(periodKey(date, st.period), v); ok++;
+  }
+  importPlan = plan; $("btnDoImport").disabled = !ok;
+  $("importPreview").innerHTML = `Готово к загрузке: <b>${ok}</b> ${plural(ok, "значение", "значения", "значений")}.` + (miss.size ? ` Не нашли в структуре: ${[...miss].slice(0, 8).map(esc).join(", ")}${miss.size > 8 ? "…" : ""}.` : "");
+}
+$("importText").addEventListener("input", previewImport);
+$("importFile").addEventListener("change", async (e) => { const f = e.target.files[0]; if (f) { $("importText").value = await f.text(); previewImport(); } });
+$("btnImport").addEventListener("click", () => { $("importScrim").hidden = false; previewImport(); });
+$("btnDoImport").addEventListener("click", async () => {
+  if (!importPlan || !db) return; const btn = $("btnDoImport"); btn.disabled = true; let n = 0;
+  try { for (const [id, vals] of importPlan) { const raw = S.stats.find((s) => s.id === id); const m = new Map((raw.points || []).map((p) => [p.d, p.v]));
+      vals.forEach((v, k) => m.set(k, v)); await db.doc("stats/" + id).update({ points: sortedPts([...m].map(([d, v]) => ({ d, v }))), updatedAt: now() }); n++; }
+    closeModals(); $("importText").value = ""; toast(`Обновлено статистик: ${n}`);
+  } catch (err) { handleWriteError(err); } finally { btn.disabled = false; }
+});
+
+/* ---------- settings ---------- */
+$("btnSettings").addEventListener("click", () => { $("weekEnd").value = String(S.settings.weekEnd); $("weekEndTime").value = S.settings.weekEndTime || ""; $("btnSetSave").disabled = !canWrite || !db; $("setScrim").hidden = false; });
+$("btnSetSave").addEventListener("click", async () => {
+  try { await db.doc("settings/main").set({ ...S.settings, weekEnd: +$("weekEnd").value, weekEndTime: $("weekEndTime").value || "" }); closeModals(); toast("Настройки сохранены"); } catch (err) { handleWriteError(err); }
+});
+
+/* ---------- common ---------- */
+function closeModals() { document.querySelectorAll(".scrim").forEach((s) => { s.hidden = true; }); if (bigChart) { bigChart.dispose(); bigChart = null; } }
+document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", closeModals));
+document.querySelectorAll(".scrim").forEach((s) => s.addEventListener("mousedown", (e) => { if (e.target === s) closeModals(); }));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModals(); });
+function handleWriteError(err) {
+  if (err?.code === "invalid_argument") { canWrite = false; renderAll(); toast("У вас доступ только на просмотр. Попросите владельца дать права участника."); }
+  else if (err?.code === "quota_exceeded") toast("Хранилище заполнено. Удалите старые данные.");
+  else toast("Не удалось сохранить. Проверьте соединение и попробуйте ещё раз.");
+}
+let tt; function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 3400); }
+function setTab(t) {
+  if (!["board", "org", "entry"].includes(t)) t = "board";
+  S.tab = t; saveUi();
+  document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  ["board", "org", "entry"].forEach((x) => { $("tab-" + x).hidden = x !== t; });
+  renderAll();
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
+function renderAll() {
+  document.querySelectorAll(".write-only").forEach((el) => { el.hidden = !canWrite; });
+  if (S.tab === "board") renderBoard(); else disposeCharts();
+  if (S.tab === "org") renderOrg();
+  if (S.tab === "entry") renderEntry();
+}
+function banner(html) { $("banner").innerHTML = html; $("banner").hidden = !html; }
+window.addEventListener("resize", () => charts.forEach((c) => c.resize()));
+const retheme = () => { if (S.tab === "board") renderBoard(); };
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", retheme);
+new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ---------- boot ---------- */
+setTab(S.tab);
+(async () => {
+  const claude = window.claude;
+  if (!claude?.use) { banner("Данные компании доступны, когда страница открыта на claude.ai."); S.loaded = true; renderAll(); return; }
+  const [dbNs, userNs, dl] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
+  db = dbNs; downloads = dl;
+  if (!db) { banner("Войдите в claude.ai, чтобы видеть статистику компании."); S.loaded = true; renderAll(); return; }
+  const can = userNs ? await userNs.can("data.write") : null; canWrite = can !== false;
+  const got = { depts: false, emps: false, stats: false };
+  const upd = (k, list) => { S[k] = list; got[k] = true; S.loaded = got.depts && got.emps && got.stats; if (S.loaded) renderAll(); };
+  const fail = () => banner("Связь с базой прервалась. Обновите страницу.");
+  db.collection("depts").onSnapshot((s) => upd("depts", s.docs.map((d) => ({ id: d.id, ...d.data() }))), fail);
+  db.collection("employees").onSnapshot((s) => upd("emps", s.docs.map((d) => ({ id: d.id, ...d.data() }))), fail);
+  db.collection("stats").onSnapshot((s) => upd("stats", s.docs.map((d) => ({ id: d.id, ...d.data() }))), fail);
+  db.doc("settings/main").onSnapshot((s) => { if (s.exists) { S.settings = { weekEnd: 4, weekEndTime: "", ...s.data() }; if (S.loaded) renderAll(); } }, () => {});
+})();
+})();
+</script>
