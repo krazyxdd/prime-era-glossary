@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Prime Era · Статистика постов</title>
 <style>
 /* Layout: header + tabs → Панель (summary → department sections: department totals row, then employees rows or comparison) | Структура (departments → statistics + employees) | Внести цифры. */
@@ -30,6 +35,9 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
@@ -160,6 +168,8 @@ code { background: var(--chip); padding: 1px 5px; border-radius: 4px; font-size:
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--green); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100% - 32px); }
 @media (max-width: 560px) { .brand h1 { font-size: 22px; } .emp-table td:first-child { width: auto; } }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="top">
@@ -316,6 +326,11 @@ code { background: var(--chip); padding: 1px 5px; border-radius: 4px; font-size:
       <select id="weekEnd"><option value="1">понедельник</option><option value="2">вторник</option><option value="3">среду</option><option value="4">четверг</option><option value="5">пятницу</option><option value="6">субботу</option><option value="0">воскресенье</option></select></label>
     <label class="field"><span>Время окончания</span><input type="time" id="weekEndTime" step="60"></label>
     <span class="hint">Например, четверг 14:00: цифры до 14:00 четверга идут в текущую неделю, после — уже в следующую. Пустое время — неделя длится до конца дня. Настройка общая для всей компании.</span>
+    <div class="box"><span class="sec-label">Резервная копия</span>
+      <span class="hint">Данные хранятся в этом браузере. Раз в неделю сохраняйте копию: с ней можно перенести всё на другой компьютер или восстановить после очистки браузера.</span>
+      <div class="row"><button class="btn sm" type="button" id="btnBackup">Скачать копию (JSON)</button>
+        <label class="btn sm" for="restoreFile" style="cursor:pointer">Восстановить из копии</label><input type="file" id="restoreFile" accept=".json" hidden></div>
+      <span class="hint" id="restoreMsg"></span></div>
     <div class="sheet-foot"><span></span><div class="row"><button class="btn" type="button" data-close>Отмена</button><button class="btn primary" type="button" id="btnSetSave">Сохранить</button></div></div>
   </div>
 </div>
@@ -844,9 +859,7 @@ $("btnExport").addEventListener("click", async () => {
   for (const raw of S.stats) { const st = eff(raw); const emp = S.emps.find((e) => e.id === st.empId); const dep = emp && deptById(emp.deptId);
     for (const p of sortedPts(st.points)) rows.push([p.d.length === 7 ? p.d + "-01" : p.d, dep?.name, emp?.name, emp?.post, st.name, st.unit, st.period, String(p.v).replace(".", ",")]); }
   if (rows.length < 2) return toast("Пока нечего выгружать: цифр ещё нет");
-  if (!downloads) return toast("Скачивание недоступно в этом просмотре");
-  try { await downloads.save({ filename: `statistiki-${today()}.csv`, data: new Blob(["﻿" + rows.map((r) => r.map(cell).join(";")).join("\n")], { type: "text/csv" }) }); toast("Таблица сохранена"); }
-  catch (err) { if (err?.code !== "declined") toast("Не удалось сохранить файл"); }
+  saveFile(`statistiki-${today()}.csv`, new Blob(["﻿" + rows.map((r) => r.map(cell).join(";")).join("\n")], { type: "text/csv" }), "Таблица сохранена");
 });
 
 /* ---------- import (long format) ---------- */
@@ -933,9 +946,64 @@ new MutationObserver(retheme).observe(document.documentElement, { attributes: tr
 
 /* ---------- boot ---------- */
 setTab(S.tab);
+async function saveFile(filename, blob, okMsg) {
+  if (downloads) { try { await downloads.save({ filename, data: blob }); toast(okMsg); } catch (err) { if (err?.code !== "declined") toast("Не удалось сохранить файл"); } return; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast(okMsg);
+}
+
+/* ---------- browser storage with the same interface as the shared store ---------- */
+const SEED = {"depts": {"sales": {"createdAt": "2026-10-05T10:00:00Z", "metrics": [{"agg": "sum", "empTarget": null, "id": "out", "inverse": false, "name": "Исходящие", "period": "week", "target": null, "unit": "шт"}, {"agg": "sum", "empTarget": null, "id": "calls", "inverse": false, "name": "Созвоны", "period": "week", "target": null, "unit": "шт"}, {"agg": "sum", "empTarget": null, "id": "rev", "inverse": false, "name": "Доход", "period": "week", "target": null, "unit": "₽"}], "name": "Отдел продаж", "updatedAt": "2026-10-05T10:00:00Z"}}, "employees": {"m1": {"createdAt": "2026-10-05T10:00:00Z", "deptId": "sales", "name": "Менеджер 1", "post": "Менеджер по продажам", "updatedAt": "2026-10-05T10:00:00Z"}, "m2": {"createdAt": "2026-10-05T10:00:00Z", "deptId": "sales", "name": "Менеджер 2", "post": "Менеджер по продажам", "updatedAt": "2026-10-05T10:00:00Z"}, "m3": {"createdAt": "2026-10-05T10:00:00Z", "deptId": "sales", "name": "Менеджер 3", "post": "Менеджер по продажам", "updatedAt": "2026-10-05T10:00:00Z"}}, "stats": {"m1-calls": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m1", "inverse": false, "metricId": "calls", "name": "Созвоны", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m1-out": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m1", "inverse": false, "metricId": "out", "name": "Исходящие", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m1-rev": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m1", "inverse": false, "metricId": "rev", "name": "Доход", "period": "week", "points": [], "target": null, "unit": "₽", "updatedAt": "2026-10-05T10:00:00Z"}, "m2-calls": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m2", "inverse": false, "metricId": "calls", "name": "Созвоны", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m2-out": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m2", "inverse": false, "metricId": "out", "name": "Исходящие", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m2-rev": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m2", "inverse": false, "metricId": "rev", "name": "Доход", "period": "week", "points": [], "target": null, "unit": "₽", "updatedAt": "2026-10-05T10:00:00Z"}, "m3-calls": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m3", "inverse": false, "metricId": "calls", "name": "Созвоны", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m3-out": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m3", "inverse": false, "metricId": "out", "name": "Исходящие", "period": "week", "points": [], "target": null, "unit": "шт", "updatedAt": "2026-10-05T10:00:00Z"}, "m3-rev": {"createdAt": "2026-10-05T10:00:00Z", "empId": "m3", "inverse": false, "metricId": "rev", "name": "Доход", "period": "week", "points": [], "target": null, "unit": "₽", "updatedAt": "2026-10-05T10:00:00Z"}}, "settings": {"main": {"weekEnd": 4, "weekEndTime": "14:00"}}};
+const STORE_KEY = "pe-stats-store-v1";
+function localStore() {
+  let store = null;
+  const load = () => { try { store = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch { store = null; } if (!store) store = JSON.parse(JSON.stringify(SEED)); };
+  load();
+  const subs = new Set();
+  const coll = (c) => store[c] || (store[c] = {});
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const snapDoc = (c, id) => { const d = coll(c)[id]; return { id, exists: !!d, data: () => d && clone(d) }; };
+  const snapColl = (c) => { const docs = Object.keys(coll(c)).map((id) => snapDoc(c, id)); return { docs, empty: !docs.length, size: docs.length }; };
+  const emit = () => subs.forEach((s) => s.cb(s.id ? snapDoc(s.c, s.id) : snapColl(s.c)));
+  const persist = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch { toast("Браузер не дал сохранить данные. Проверьте, что сайт не в режиме инкогнито."); } emit(); };
+  const watch = (c, id, cb) => { const s = { c, id, cb }; subs.add(s); setTimeout(() => cb(id ? snapDoc(c, id) : snapColl(c)), 0); return () => subs.delete(s); };
+  const ref = (c, id) => ({ id,
+    set: async (d) => { coll(c)[id] = clone(d); persist(); },
+    update: async (d) => { if (!coll(c)[id]) throw { code: "invalid_argument" }; Object.assign(coll(c)[id], clone(d)); persist(); },
+    delete: async () => { delete coll(c)[id]; persist(); },
+    onSnapshot: (cb) => watch(c, id, cb) });
+  window.addEventListener("storage", (e) => { if (e.key === STORE_KEY) { load(); emit(); } }); // other open tabs
+  return {
+    doc: (path) => { const [c, id] = path.split("/"); return ref(c, id); },
+    collection: (c) => ({ doc: (id) => ref(c, id || uidGen() + uidGen()), onSnapshot: (cb) => watch(c, null, cb) }),
+    dump: () => clone(store),
+    restore: (data) => { store = clone(data); persist(); },
+  };
+}
+$("btnBackup").addEventListener("click", () => {
+  if (!db?.dump) return toast("Копия доступна в версии для браузера");
+  saveFile(`statistiki-kopiya-${today()}.json`, new Blob([JSON.stringify(db.dump(), null, 1)], { type: "application/json" }), "Копия сохранена");
+});
+$("restoreFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f || !db?.restore) return;
+  try { const data = JSON.parse(await f.text()); if (!data.depts || !data.employees || !data.stats) throw 0;
+    db.restore(data); $("restoreMsg").textContent = "Данные восстановлены из копии."; }
+  catch { $("restoreMsg").textContent = "Это не файл копии статистики. Выберите файл statistiki-kopiya-….json."; }
+  e.target.value = "";
+});
+
 (async () => {
   const claude = window.claude;
-  if (!claude?.use) { banner("Данные компании доступны, когда страница открыта на claude.ai."); S.loaded = true; renderAll(); return; }
+  if (!claude?.use) {
+    db = localStore(); canWrite = true; $("btnSetSave").disabled = false;
+    const got = { depts: false, emps: false, stats: false };
+    const upd = (k, list) => { S[k] = list; got[k] = true; S.loaded = got.depts && got.emps && got.stats; if (S.loaded) renderAll(); };
+    db.collection("depts").onSnapshot((s) => upd("depts", s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    db.collection("employees").onSnapshot((s) => upd("emps", s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    db.collection("stats").onSnapshot((s) => upd("stats", s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+    db.doc("settings/main").onSnapshot((s) => { if (s.exists) { S.settings = { weekEnd: 4, weekEndTime: "", ...s.data() }; if (S.loaded) renderAll(); } });
+    return;
+  }
   const [dbNs, userNs, dl] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
   db = dbNs; downloads = dl;
   if (!db) { banner("Войдите в claude.ai, чтобы видеть статистику компании."); S.loaded = true; renderAll(); return; }
@@ -950,3 +1018,5 @@ setTab(S.tab);
 })();
 })();
 </script>
+</body>
+</html>
